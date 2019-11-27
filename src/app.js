@@ -80,31 +80,6 @@ class App {
       );
     });
 
-    this.agenda.define('FEED_FISHES', async job => {
-      const { aquarium } = job.attrs.data;
-      const formated = this.getFormatedDate();
-
-      const message = { type: 'REQUEST_FEED_FISHES', aquarium };
-
-      await this.producer.send({
-        topic: 'scheduling-websocket',
-        compression: CompressionTypes.GZIP,
-        messages: [{ value: JSON.stringify(message) }],
-      });
-
-      const notify = { type: 'NOTIFY_FISH_FEED_REQUEST', aquarium };
-
-      await this.producer.send({
-        topic: 'scheduling-notification',
-        compression: CompressionTypes.GZIP,
-        messages: [{ value: JSON.stringify(notify) }],
-      });
-
-      console.log(
-        `Command: FEED_FISHES - Aquarium: ${aquarium} - Time: ${formated}`
-      );
-    });
-
     this.agenda.define('TURN_ON_LIGHTS', async job => {
       const { aquarium } = job.attrs.data;
       const formated = this.getFormatedDate();
@@ -200,8 +175,12 @@ class App {
             verifyFilter.schedule('today at 8:10am').repeatEvery('30 days');
             verifyFood.schedule('today at 8:20am').repeatEvery('7 days');
             swapWater.schedule('today at 8:30am').repeatEvery('15 days');
-            turnOnLights.schedule(body.turnOnLights).repeatEvery('day');
-            turnOffLights.schedule(body.turnOffLights).repeatEvery('day');
+            turnOnLights
+              .schedule(`today at ${body.turnOnLights}am`)
+              .repeatEvery('day');
+            turnOffLights
+              .schedule(`today at ${body.turnOffLights}am`)
+              .repeatEvery('day');
 
             await verifyFilter.save();
             await verifyFood.save();
@@ -209,9 +188,38 @@ class App {
             await turnOnLights.save();
             await turnOffLights.save();
 
-            await this.agenda.every(body.feedInterval, 'FEED_FISHES', {
-              aquarium: params.name,
+            this.agenda.define(`FEED_FISHES_${params.name}`, async job => {
+              const { aquarium } = job.attrs.data;
+              const formated = this.getFormatedDate();
+
+              const newMessage = { type: 'REQUEST_FEED_FISHES', aquarium };
+
+              await this.producer.send({
+                topic: 'scheduling-websocket',
+                compression: CompressionTypes.GZIP,
+                messages: [{ value: JSON.stringify(newMessage) }],
+              });
+
+              const notify = { type: 'NOTIFY_FISH_FEED_REQUEST', aquarium };
+
+              await this.producer.send({
+                topic: 'scheduling-notification',
+                compression: CompressionTypes.GZIP,
+                messages: [{ value: JSON.stringify(notify) }],
+              });
+
+              console.log(
+                `Command: FEED_FISHES - Aquarium: ${aquarium} - Time: ${formated}`
+              );
             });
+
+            await this.agenda.every(
+              `${body.feedInterval} hours`,
+              `FEED_FISHES_${params.name}`,
+              {
+                aquarium: params.name,
+              }
+            );
 
             break;
           default:
