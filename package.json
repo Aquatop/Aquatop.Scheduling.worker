@@ -1,0 +1,26 @@
+{
+  "name": "Aquatop.Scheduling.worker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Aquatop/Aquatop.Scheduling.worker.git",
+  "author": "lukassxp <lpalucas.10@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon src/worker.js"
+  },
+  "devDependencies": {
+    "eslint": "^6.2.2",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-prettier": "^3.1.0",
+    "nodemon": "^1.19.1",
+    "prettier": "^1.18.2",
+    "sucrase": "^3.10.1"
+  },
+  "dependencies": {
+    "agenda": "^2.1.0",
+    "dotenv": "^8.2.0",
+    "kafkajs": "^1.11.0"
+  }
+}
